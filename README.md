@@ -3,12 +3,35 @@
 simple test framework for C. It's a single header file, just include in your
 include path.
 
-## TODO
+## Requirements
 
-- build a structure similar to munit:
-  - user should configure their test suite through a struct like `SestConfig`
-  - tests are registered as a field in the struct
-  - a `sest_run` function that takes that struct then executes all of those tests
+You need a fully `C99` compliant compiler, no further dependencies. I
+explicitly tested these setups:
+
+- MacOS using `GCC 14` and `Apple Clang 15`
+- Linux using `GCC 14` and `Clang 18`
+
+## Features
+
+`sest` has practically no features, and that's by design. You just list tests
+functions in a macro, and then it runs those tests sequentially.
+
+Check the example(s) in the `examples` directory for how to use sest.
+
+## Running the examples
+
+If you'd like to run the examples, you can run `make` in this project's root
+directory to build them.
+The binaries will then be but into `./bin` of the project.
+
+## Custom asserts
+
+`sest` defines a couple of "assert" macros that don't throw an exception when
+they fail. If you want your assert to throw, use stdlib's `<assert.h>`. Most of
+the time I don't want my test suite to completely stop once an assert fails,
+which is why these `sets_assert_*` macros exist.
+
+The macros are defined and documented in the header file `sest.h`.
 
 ## LICENSE
 

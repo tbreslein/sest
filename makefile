@@ -1,14 +1,14 @@
-BUILD_DIR := build
+BIN_DIR := bin
 HEADER := sest.h
 EXAMPLE_DIR := examples
 EXAMPLES_SRC := $(wildcard $(EXAMPLE_DIR)/*.c)
-EXAMPLES := $(subst $(EXAMPLE_DIR),$(BUILD_DIR),$(patsubst %.c,%,$(EXAMPLES_SRC)))
+EXAMPLES := $(subst $(EXAMPLE_DIR),$(BIN_DIR),$(patsubst %.c,%,$(EXAMPLES_SRC)))
 
 # this stuff is only used for the examples
 CC_DB := compile_commands.json
 CC := gcc
 CFLAGS := \
-		  -std=c23 \
+		  -std=c99 \
 		  -Wall \
 		  -Wextra \
 		  -pedantic \
@@ -19,15 +19,20 @@ CFLAGS := \
 		  -Wundef \
 		  -Wshadow \
 		  -Wformat=2 \
-		  -Wformat-truncation \
 		  -Wunreachable-code \
 		  -Wswitch-enum \
 		  -Wswitch-default \
-		  -flto \
-		  -Os
+		  -O0
 
 ifeq ($(CC),clang)
-	CFLAGS += -Weverything
+	CFLAGS += \
+			  -Weverything \
+			  -Wno-poison-system-directories \
+			  -Wno-unused-function
+endif
+ifeq ($(CC),gcc)
+	CFLAGS += \
+			  -Wformat-truncation
 endif
 
 DEVFLAGS := $(CFLAGS) \
@@ -44,12 +49,15 @@ all: $(EXAMPLES)
 dev: $(EXAMPLES_SRC)
 	@bear -- $(MAKE) CFLAGS="$(DEVFLAGS)"
 
-$(EXAMPLES): $(EXAMPLES_SRC) $(BUILD_DIR)
-	$(CC) $(CFLAGS) -o $@ $(subst $(BUILD_DIR),$(EXAMPLE_DIR),$@).c -I.
+run: $(EXAMPLES)
+	@for e in $(EXAMPLES); do echo "Running example: $$e"; ./$$e || true; done
 
-$(BUILD_DIR):
+$(EXAMPLES): $(EXAMPLES_SRC) $(BIN_DIR)
+	$(CC) $(CFLAGS) -o $@ $(subst $(BIN_DIR),$(EXAMPLE_DIR),$@).c -I.
+
+$(BIN_DIR):
 	mkdir -p $@
 
 clean:
-	rm -fr $(BUILD_DIR)
+	rm -fr $(BIN_DIR)
 	rm -fr $(CC_DB)
