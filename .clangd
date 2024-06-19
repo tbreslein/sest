@@ -1,3 +1,4 @@
 ---
 CompileFlags:
-  Add: [-Wall, -Wextra, -std=c2x]
+  Add: [-xc, -Wall, -Wextra, -std=c2x]
+  Compiler: gcc

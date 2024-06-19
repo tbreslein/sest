@@ -1,6 +1,7 @@
 # sest
 
-simple test framework for c
+simple test framework for C. It's a single header file, just include in your
+include path.
 
 ## TODO
 
