@@ -34,15 +34,27 @@ int __SEST_FAILURE__(const char *const expr, const char *const file,
 // === SEST IMPLEMENTATION ===
 // This is where the "user" stuff ends.
 
+#ifndef __SEST_NO_COLOR__
+static const char *const color_reset = "\033[0m";
+static const char *const color_bold_green = "\033[1;32m";
+static const char *const color_bold_red = "\033[1;31m";
+static const char *const color_bold_fg = "\033[1m";
+#else
+static const char *const color_reset = "";
+static const char *const color_bold_green = "";
+static const char *const color_bold_red = "";
+static const char *const color_bold_fg = "";
+#endif
+
 int __SEST_SUCCESS__(const char *const expr) {
-    fprintf(stdout, "[ \033[1;32mSUCCESS\033[0m ]: %s\n", expr);
+    fprintf(stdout, "[ %sSUCCESS%s ]: %s\n", color_bold_green, color_reset,
+            expr);
     return 0;
 }
 int __SEST_FAILURE__(const char *const expr, const char *const file,
                      const int line) {
-    fprintf(stderr,
-            "[ \033[1;31mFAILURE\033[0m ]: %s ===> assert location: %s:%d\n",
-            expr, file, line);
+    fprintf(stderr, "[ %sFAILURE%s ]: %s ===> assert location: %s:%d\n",
+            color_bold_red, color_reset, expr, file, line);
     return 1;
 }
 
@@ -63,7 +75,7 @@ static char **__get_sest_test_name_array(char *test_names,
     char **name_array = malloc(num_names * sizeof(char *));
 
     if (!name_array) {
-        fprintf(stderr, "malloc error at %s:%d", __FILE__, __LINE__);
+        fprintf(stderr, "malloc error at %s:%d\n", __FILE__, __LINE__);
         exit(1);
     }
 
@@ -71,7 +83,7 @@ static char **__get_sest_test_name_array(char *test_names,
         name_array[i] = NULL;
         name_array[i] = malloc(name_max_len * sizeof(char));
         if (!name_array[i]) {
-            fprintf(stderr, "malloc error at %s:%d", __FILE__, __LINE__);
+            fprintf(stderr, "malloc error at %s:%d\n", __FILE__, __LINE__);
             exit(1);
         }
     }
@@ -104,21 +116,22 @@ int __run_sest_tests(SestTest **tests, char *test_name_string) {
     int *err_codes = malloc(num_tests * sizeof(int));
 
     if (!err_codes) {
-        fprintf(stderr, "malloc error at %s:%d", __FILE__, __LINE__);
+        fprintf(stderr, "malloc error at %s:%d\n", __FILE__, __LINE__);
         exit(1);
     }
 
     for (size_t i = 0; i < num_tests; i++) {
-        printf("\n\033[1mRunning test: %s\033[0m\n", test_name_array[i]);
+        printf("\n%sRunning test: %s%s\n", color_bold_fg, test_name_array[i],
+               color_reset);
         err_codes[i] = (tests[i])();
         num_err += err_codes[i] != 0;
         num_success -= err_codes[i] != 0;
     }
 
-    printf("\n\n\033[1m=== SEST SUMMARY ===\033[0m\n");
-    printf("\033[1mTests run: %zu\033[0m\n", num_tests);
-    printf("\033[1;32mPassed: %d\033[0m\n", num_success);
-    printf("\033[1;31mFailed: %d\033[0m\n", num_err);
+    printf("\n\n%s=== SEST SUMMARY ===%s\n", color_bold_fg, color_reset);
+    printf("%sTests run: %zu%s\n", color_bold_fg, num_tests, color_reset);
+    printf("%sPassed: %d%s\n", color_bold_green, num_success, color_reset);
+    printf("%sFailed: %d%s\n", color_bold_red, num_err, color_reset);
     if (num_err > 0) {
         printf("\nThe following tests failed:\n");
         for (size_t i = 0; i < num_tests; i++) {

@@ -1,3 +1,6 @@
+// you may define this BEFORE including sest.h to disable colored output
+// #define __SEST_NO_COLOR__
+
 #include "sest.h"
 
 // Let's imagine this is the function we would like to test
