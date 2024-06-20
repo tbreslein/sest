@@ -123,10 +123,18 @@ int __run_sest_tests(SestTest **tests, char *test_name_string) {
         printf("\nThe following tests failed:\n");
         for (size_t i = 0; i < num_tests; i++) {
             if (err_codes[i] > 0) {
-                printf("  - %s\n", test_name_array[i]);
+                printf("  - %s | error code: %d\n", test_name_array[i],
+                       err_codes[i]);
             }
         }
     }
+
+    for (size_t i = 0; i < num_tests; i++) {
+        free(test_name_array[i]);
+    }
+    free(test_name_array);
+    free(err_codes);
+
     return num_err;
 }
 
