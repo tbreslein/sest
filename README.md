@@ -16,13 +16,42 @@ explicitly tested these setups:
 `sest` has practically no features, and that's by design. You just list tests
 functions in a macro, and then it runs those tests sequentially.
 
-Check the example(s) in the `examples` directory for how to use sest.
+What's important about these functions is that they must have take no arguments,
+and they must return an `int`. That `int` is used to indicate whether your test
+function failed. Personally, I just use the `sets_assert_*` macros, which return
+`1` to the expression they are called in if they assert failed, and then my test
+functions return the number of failed errors (see the minimal example).
+
+## Output
+
+### `__SEST_NO_COLOR__`
+
+By default, `sest` produces colored output. If you don't want that, add the
+`__SEST_NO_COLOR__` define to your test file or to your compile time variables.
+
+If you want to add it to your test file directly, make sure you define it before
+including `sest.h`:
+
+```c
+// top of the file
+
+#define __SEST_NO_COLOR__
+#include "sest.h"
+
+// ...
+```
+
+### Heap allocations
+
+Since this is important for some people, let me be clear: `sest` performs heap
+allocations during its test runs. If you cannot have that in your test
+framework, then `sest` is not fit for your use case.
 
 ## Running the examples
 
 If you'd like to run the examples, you can run `make` in this project's root
-directory to build them.
-The binaries will then be but into `./bin` of the project.
+directory to build them. The binaries will then be but into `./bin` of the
+project.
 
 ## Custom asserts
 
@@ -30,6 +59,10 @@ The binaries will then be but into `./bin` of the project.
 they fail. If you want your assert to throw, use stdlib's `<assert.h>`. Most of
 the time I don't want my test suite to completely stop once an assert fails,
 which is why these `sets_assert_*` macros exist.
+
+Note that these macros have a return value! They return `1` in case the assert
+failed, and `0` if it passed. Use this to keep track of the number of failed
+asserts in your test.
 
 The macros are defined and documented in the header file `sest.h`.
 
