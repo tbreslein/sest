@@ -80,7 +80,6 @@ static char **__get_sest_test_name_array(char *test_names,
     }
 
     for (size_t i = 0; i < num_names; i++) {
-        name_array[i] = NULL;
         name_array[i] = malloc(name_max_len * sizeof(char));
         if (!name_array[i]) {
             fprintf(stderr, "malloc error at %s:%d\n", __FILE__, __LINE__);
@@ -88,9 +87,14 @@ static char **__get_sest_test_name_array(char *test_names,
         }
     }
 
+    const size_t k_max = strlen(test_names);
     for (size_t j = 0, k = 0; j < num_names; j++) {
         for (size_t i = 0; i < name_max_len; i++, k++) {
-            if (test_names[k] == ',') {
+            if (k == k_max) {
+                name_array[j][i] = '\0';
+                break;
+            } else if (test_names[k] == ',') {
+                name_array[j][i] = '\0';
                 k += 2; // skip over the , AND the space
                 break;
             } else {
