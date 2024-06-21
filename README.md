@@ -1,7 +1,6 @@
 # sest
 
-simple test framework for C. It's a single header file, just include in your
-include path.
+A simple singe header test framework for C.
 
 ## Requirements
 
@@ -17,9 +16,8 @@ explicitly tested these setups:
 functions in a macro, and then it runs those tests sequentially.
 
 What's important about these functions is that they must have take no arguments,
-and they must return an `int`. That `int` is used to indicate whether your test
-function failed. Personally, I just use the `sets_assert_*` macros, which return
-`1` to the expression they are called in if they assert failed, and then my test
+and they must return an `int` as an error code. Personally, I just use the `sest_assert_*` macros, which return
+`1` to the expression they are called in if the assert failed, and then my test
 functions return the number of failed errors (see the minimal example).
 
 ## Output
