@@ -22,7 +22,7 @@ CFLAGS := \
 		  -Wunreachable-code \
 		  -Wswitch-enum \
 		  -Wswitch-default \
-		  -O0
+		  -O3
 
 ifeq ($(CC),clang)
 	CFLAGS += \
