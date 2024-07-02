@@ -191,7 +191,69 @@ int __run_sest_tests(SestTest **tests, char *test_name_string) {
 
 // === SEST BENCH STUFF ===
 typedef int SestBench(void);
+typedef enum {
+    Warmup,
+    Bench,
+} SestBenchType;
+
 int __run_sest_bench(SestBench **benches, char *bench_name_string);
+int __run_single_sest_bench(SestBench *benches, char *bench_name_string,
+                            int run_timings[], size_t n_runs, int err_codes[],
+                            SestBenchType bench_type);
+
+int __run_single_sest_bench(SestBench *bench, char *bench_name_string,
+                            int run_timings[], size_t n_runs, int *err_code,
+                            SestBenchType bench_type) {
+    printf("\n%sRunning bench: %s%s\n", color_bold_fg, bench_name_string,
+           color_reset);
+
+    struct timespec start, end;
+
+    int sum_timings = 0;
+    int num_failed_bench_runs = 0;
+
+    switch (bench_type) {
+        case Warmup: {
+            printf("Progress: Warmup 0 / %zu\n", n_runs);
+        } break;
+        case Bench: {
+            printf("Progress: Run 0 / %zu\n", n_runs);
+        } break;
+        default: {
+            printf("HOW?!\n");
+            exit(1);
+        } break;
+    }
+
+    for (size_t i_run = 0; i_run < n_runs; i_run++) {
+        int x;
+        clock_gettime(CLOCK_REALTIME, &start);
+        x = (bench)() > 0;
+        clock_gettime(CLOCK_REALTIME, &end);
+        num_failed_bench_runs += x;
+
+        run_timings[i_run] = end.tv_nsec - start.tv_nsec;
+        sum_timings += run_timings[i_run];
+        printf("\033[A\33[2K\r");
+        switch (bench_type) {
+            case Warmup: {
+                printf("Progress: Warmup %zu / %zu\n", i_run + 1, n_runs);
+            } break;
+            case Bench: {
+                printf("Progress: Run %zu / %zu\n", i_run + 1, n_runs);
+            } break;
+            default: {
+                printf("HOW?!\n");
+                exit(1);
+            } break;
+        }
+    }
+    *err_code = num_failed_bench_runs;
+    double avg_timing = (double)sum_timings / (double)n_runs;
+    printf("Average Timing: %e ns\n\n", avg_timing);
+
+    return num_failed_bench_runs > 0;
+}
 
 int __run_sest_bench(SestBench **benches, char *bench_name_string) {
     printf("\n\n%s=== STARTING SEST BENCHES ===%s\n", color_bold_fg,
@@ -207,36 +269,17 @@ int __run_sest_bench(SestBench **benches, char *bench_name_string) {
         exit(1);
     }
 
-    const size_t n_runs = 1000;
+    const size_t n_runs = 10;
     int *run_timings = malloc(n_runs * sizeof(int));
     if (!run_timings) {
         fprintf(stderr, "malloc error at %s:%d\n", __FILE__, __LINE__);
         exit(1);
     }
 
-    struct timespec start, end;
-
     for (size_t i_bench = 0; i_bench < num_benches; i_bench++) {
-        printf("\n%sRunning bench: %s%s\n", color_bold_fg,
-               bench_name_array[i_bench], color_reset);
-
-        int sum_timings = 0;
-        int num_failed_bench_runs = 0;
-        for (size_t i_run = 0; i_run < n_runs; i_run++) {
-            int x;
-            clock_gettime(CLOCK_REALTIME, &start);
-            x = (benches[i_bench])() > 0;
-            clock_gettime(CLOCK_REALTIME, &end);
-            num_failed_bench_runs += x;
-
-            run_timings[i_run] = end.tv_nsec - start.tv_nsec;
-            sum_timings += run_timings[i_run];
-        }
-        err_codes[i_bench] = num_failed_bench_runs;
-        double avg_timing = (double)sum_timings / (double)n_runs;
-        printf("Average Timing: %e ns\n\n", avg_timing);
-
-        num_err += num_failed_bench_runs > 0;
+        __run_single_sest_bench(benches[i_bench], bench_name_array[i_bench],
+                                run_timings, n_runs, &err_codes[i_bench],
+                                Warmup);
     }
 
     for (size_t i = 0; i < num_benches; i++) {
