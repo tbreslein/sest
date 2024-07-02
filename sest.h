@@ -198,18 +198,16 @@ typedef enum {
 
 int __run_sest_bench(SestBench **benches, char *bench_name_string);
 int __run_single_sest_bench(SestBench *benches, char *bench_name_string,
-                            int run_timings[], size_t n_runs, int err_codes[],
-                            SestBenchType bench_type);
+                            double run_timings[], size_t n_runs,
+                            int err_codes[], SestBenchType bench_type);
 
 int __run_single_sest_bench(SestBench *bench, char *bench_name_string,
-                            int run_timings[], size_t n_runs, int *err_code,
+                            double run_timings[], size_t n_runs, int *err_code,
                             SestBenchType bench_type) {
     printf("\n%sRunning bench: %s%s\n", color_bold_fg, bench_name_string,
            color_reset);
 
-    struct timespec start, end;
-
-    int sum_timings = 0;
+    double sum_timings = 0;
     int num_failed_bench_runs = 0;
 
     switch (bench_type) {
@@ -226,14 +224,19 @@ int __run_single_sest_bench(SestBench *bench, char *bench_name_string,
     }
 
     for (size_t i_run = 0; i_run < n_runs; i_run++) {
-        int x;
-        clock_gettime(CLOCK_REALTIME, &start);
-        x = (bench)() > 0;
-        clock_gettime(CLOCK_REALTIME, &end);
-        num_failed_bench_runs += x;
+        struct timespec tv_start, tv_end;
 
-        run_timings[i_run] = end.tv_nsec - start.tv_nsec;
+        int run_errcode;
+        clock_gettime(CLOCK_MONOTONIC_RAW, &tv_start);
+        run_errcode = (bench)() > 0;
+        clock_gettime(CLOCK_MONOTONIC_RAW, &tv_end);
+        num_failed_bench_runs += run_errcode;
+
+        double start = tv_start.tv_sec + (double)tv_start.tv_nsec * 10.0e-9;
+        double end = tv_end.tv_sec + (double)tv_end.tv_nsec * 10.0e-9;
+        run_timings[i_run] = end - start;
         sum_timings += run_timings[i_run];
+
         printf("\033[A\33[2K\r");
         switch (bench_type) {
             case Warmup: {
@@ -250,7 +253,7 @@ int __run_single_sest_bench(SestBench *bench, char *bench_name_string,
     }
     *err_code = num_failed_bench_runs;
     double avg_timing = (double)sum_timings / (double)n_runs;
-    printf("Average Timing: %e ns\n\n", avg_timing);
+    printf("Average Timing: %e s\n\n", avg_timing);
 
     return num_failed_bench_runs > 0;
 }
@@ -269,8 +272,8 @@ int __run_sest_bench(SestBench **benches, char *bench_name_string) {
         exit(1);
     }
 
-    const size_t n_runs = 10;
-    int *run_timings = malloc(n_runs * sizeof(int));
+    const size_t n_runs = 2;
+    double *run_timings = malloc(n_runs * sizeof(double));
     if (!run_timings) {
         fprintf(stderr, "malloc error at %s:%d\n", __FILE__, __LINE__);
         exit(1);

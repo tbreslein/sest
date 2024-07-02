@@ -6,11 +6,12 @@
 
 // Let's imagine this is the function we would like to test
 size_t factorial(size_t n) {
-    sleep(1);
-    if (n == 0)
-        return 1;
-    else
-        return (n * factorial(n - 1));
+    sleep(10);
+    return n;
+    /*if (n == 0)*/
+    /*    return 1;*/
+    /*else*/
+    /*    return (n * factorial(n - 1));*/
 }
 
 int bench_factorial_3(void) { return factorial(3); }
