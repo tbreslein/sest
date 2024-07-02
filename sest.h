@@ -1,5 +1,5 @@
 /* sest.h
- * Version: v0.1.1
+ * Version: v0.2.0
  *
  * The MIT License (MIT)
  *
