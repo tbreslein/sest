@@ -66,11 +66,15 @@ int __SEST_FAILURE__(const char *const expr, const char *const file,
 static const char *const color_reset = "\033[0m";
 static const char *const color_bold_green = "\033[1;32m";
 static const char *const color_bold_red = "\033[1;31m";
+static const char *const color_bold_blue = "\033[1;34m";
+static const char *const color_bold_magenta = "\033[1;35m";
 static const char *const color_bold_fg = "\033[1m";
 #else
 static const char *const color_reset = "";
 static const char *const color_bold_green = "";
 static const char *const color_bold_red = "";
+static const char *const color_bold_blue = "";
+static const char *const color_bold_magenta = "";
 static const char *const color_bold_fg = "";
 #endif
 
@@ -202,16 +206,28 @@ typedef struct {
     double min_timing;
     double max_timing;
     double variance;
-} BenchOutput;
+} SestBenchOutput;
 
-int __run_sest_bench(SestBench **benches, char *bench_name_string);
-BenchOutput __run_single_sest_bench(SestBench *benches, char *bench_name_string,
-                                    size_t n_runs, int err_codes[],
-                                    SestBenchType bench_type);
+typedef struct {
+    size_t n_warmup;
+    size_t min_runs;
+    size_t max_runs;
+    size_t n_runs_fixed;
+    double max_bench_time;
+    int compare;
+} SestBenchConfig;
 
-BenchOutput __run_single_sest_bench(SestBench *bench, char *bench_name_string,
-                                    size_t n_runs, int *err_code,
-                                    SestBenchType bench_type) {
+int __run_sest_bench(SestBenchConfig config, SestBench **benches,
+                     char *bench_name_string);
+SestBenchOutput __run_single_sest_bench(SestBench *benches,
+                                        char *bench_name_string, size_t n_runs,
+                                        int err_codes[],
+                                        SestBenchType bench_type);
+
+SestBenchOutput __run_single_sest_bench(SestBench *bench,
+                                        char *bench_name_string, size_t n_runs,
+                                        int *err_code,
+                                        SestBenchType bench_type) {
     printf("\n%sRunning bench: %s%s\n", color_bold_fg, bench_name_string,
            color_reset);
 
@@ -267,11 +283,11 @@ BenchOutput __run_single_sest_bench(SestBench *bench, char *bench_name_string,
     }
     *err_code = num_failed_bench_runs;
 
-    BenchOutput result = {.has_failed = num_failed_bench_runs > 0,
-                          .avg_timing = sum_timings / (double)n_runs,
-                          .min_timing = DBL_MAX,
-                          .max_timing = 0.0,
-                          .variance = 0.0};
+    SestBenchOutput result = {.has_failed = num_failed_bench_runs > 0,
+                              .avg_timing = sum_timings / (double)n_runs,
+                              .min_timing = DBL_MAX,
+                              .max_timing = 0.0,
+                              .variance = 0.0};
 
     for (size_t i = 0; i < n_runs; i++) {
         result.min_timing = run_timings[i] < result.min_timing
@@ -293,11 +309,14 @@ BenchOutput __run_single_sest_bench(SestBench *bench, char *bench_name_string,
         } break;
         case Bench: {
             printf("Bench finished! Ran %zu times\n", n_runs);
-            printf("%sAverage runtime: %e s%s\n", color_bold_green,
+            printf("%sAverage:  %11.4e s%s\n", color_bold_green,
                    result.avg_timing, color_reset);
-            printf("Variance:        %e s^2\n", result.variance);
-            printf("Min runtime:     %e s\n", result.min_timing);
-            printf("Max runtime:     %e s\n\n", result.max_timing);
+            printf("%sVariance: %11.4e s^2%s\n", color_reset, result.variance,
+                   color_reset);
+            printf("%sMin:      %11.4e s%s\n", color_bold_blue,
+                   result.min_timing, color_reset);
+            printf("%sMax:      %11.4e s%s\n\n", color_bold_magenta,
+                   result.max_timing, color_reset);
         } break;
         default: {
             printf("HOW?!\n");
@@ -309,11 +328,31 @@ BenchOutput __run_single_sest_bench(SestBench *bench, char *bench_name_string,
     return result;
 }
 
-int __run_sest_bench(SestBench **benches, char *bench_name_string) {
+int __run_sest_bench(SestBenchConfig config, SestBench **benches,
+                     char *bench_name_string) {
+    if (config.n_warmup == 0) {
+        config.n_warmup = 10;
+    }
+    if (config.n_runs_fixed > 0) {
+        config.min_runs = config.n_runs_fixed;
+        config.max_runs = config.n_runs_fixed;
+    } else {
+        if (config.min_runs == 0) {
+            config.min_runs = 10;
+        }
+        if (config.max_runs == 0) {
+            config.max_runs = 100;
+        }
+    }
+    if (config.max_bench_time <= 0.0) {
+        config.max_bench_time = 10.0;
+    }
+
     printf("\n\n%s=== STARTING SEST BENCHES ===%s\n", color_bold_fg,
            color_reset);
     const size_t num_benches = __sest_get_num_names(bench_name_string);
     int num_err = 0;
+
     char **bench_name_array =
         __get_sest_func_name_array(bench_name_string, num_benches);
 
@@ -323,24 +362,28 @@ int __run_sest_bench(SestBench **benches, char *bench_name_string) {
         exit(1);
     }
 
-    for (size_t i_bench = 0; i_bench < num_benches; i_bench++) {
-        const size_t n_runs_warmup = 2;
+    SestBenchOutput *results = malloc(num_benches * sizeof(SestBenchOutput));
 
-        BenchOutput warmup =
-            __run_single_sest_bench(benches[i_bench], bench_name_array[i_bench],
-                                    n_runs_warmup, &err_codes[i_bench], Warmup);
+    for (size_t i_bench = 0; i_bench < num_benches; i_bench++) {
+        SestBenchOutput warmup = __run_single_sest_bench(
+            benches[i_bench], bench_name_array[i_bench], config.n_warmup,
+            &err_codes[i_bench], Warmup);
 
         size_t n_runs_bench = 1;
-        if (warmup.avg_timing > 10.0) {
-            n_runs_bench = 10;
+        if (warmup.avg_timing > config.max_bench_time) {
+            n_runs_bench = config.max_runs;
         } else {
             n_runs_bench = (size_t)(10.0 / warmup.avg_timing);
+            if (n_runs_bench < config.min_runs)
+                n_runs_bench = config.min_runs;
         }
 
-        __run_single_sest_bench(benches[i_bench], bench_name_array[i_bench],
-                                n_runs_bench, &err_codes[i_bench], Bench);
+        results[i_bench] =
+            __run_single_sest_bench(benches[i_bench], bench_name_array[i_bench],
+                                    n_runs_bench, &err_codes[i_bench], Bench);
     }
 
+    free(results);
     for (size_t i = 0; i < num_benches; i++) {
         free(bench_name_array[i]);
     }
@@ -350,5 +393,5 @@ int __run_sest_bench(SestBench **benches, char *bench_name_string) {
     return num_err;
 }
 
-#define RUN_SEST_BENCH(...)                                                    \
-    __run_sest_bench((SestBench *[]){__VA_ARGS__, NULL}, #__VA_ARGS__)
+#define RUN_SEST_BENCH(config, ...)                                            \
+    __run_sest_bench(config, (SestBench *[]){__VA_ARGS__, NULL}, #__VA_ARGS__)
