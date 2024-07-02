@@ -6,7 +6,7 @@
 
 // Let's imagine this is the function we would like to test
 size_t factorial(size_t n) {
-    sleep(10);
+    sleep(2);
     return n;
     /*if (n == 0)*/
     /*    return 1;*/
