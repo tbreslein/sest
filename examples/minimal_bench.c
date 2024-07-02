@@ -52,7 +52,8 @@ int main(void) {
 
         // If this is set to a number > 0, it overwrites what sest calculates
         // how often a function should run in a given benchmark.
-        .n_runs_fixed = 6,
+        /*.n_runs_fixed = 6,*/
+        .n_runs_fixed = 10000,
 
         // When passing multiple functions to the macro, setting this to > 0
         // enables that sest compares the average runtime of all functions.
@@ -61,10 +62,10 @@ int main(void) {
     };
 
     // Pass the wrapper functions you want to run to the macro to run your tests
-    int err_code = RUN_SEST_BENCH(conf, bench_slow_factorial_3);
-    if (err_code > 0) {
-        return err_code;
-    }
+    /*int err_code = RUN_SEST_BENCH(conf, bench_slow_factorial_3);*/
+    /*if (err_code > 0) {*/
+    /*    return err_code;*/
+    /*}*/
 
     conf.compare = 1; // enable comparing
     return RUN_SEST_BENCH(conf, bench_factorial_100, bench_factorial_1000,

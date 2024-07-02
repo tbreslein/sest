@@ -1,8 +1,6 @@
 ---
-BasedOnStyle: LLVM
-AlignArrayOfStructures: Right
-AlwaysBreakTemplateDeclarations: Yes
-BreakConstructorInitializers: BeforeComma
+AlignAfterOpenBracket: DontAlign
+BreakBeforeBraces: Mozilla
 IndentCaseLabels: true
 IndentWidth: 4
 ColumnLimit: 80
