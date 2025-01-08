@@ -1,6 +1,6 @@
 # sest
 
-A simple singe header test framework for C.
+A simple single header test framework for C.
 
 ## Requirements
 
@@ -16,9 +16,11 @@ explicitly tested these setups:
 functions in a macro, and then it runs those tests sequentially.
 
 What's important about these functions is that they must have take no arguments,
-and they must return an `int` as an error code. Personally, I just use the `sest_assert_*` macros, which return
-`1` to the expression they are called in if the assert failed, and then my test
-functions return the number of failed errors (see the minimal example).
+and they must return an `int` as an error code. Personally, I just use the
+`sest_assert_*` macros, which return `1` to the expression they are called in if
+the assert failed, and then my test functions return the number of failed errors
+(see the minimal example). You are free to attach whatever meaning you want to
+the returned integers, that's just what I do.
 
 ## Output
 
@@ -43,7 +45,7 @@ including `sest.h`:
 
 Since this is important for some people, let me be clear: `sest` performs heap
 allocations during its test runs. If you cannot have that in your test
-framework, then `sest` is not fit for your use case.
+framework, then `sest` is no fit for your use case.
 
 ## Running the examples
 
