@@ -4,8 +4,8 @@ A simple single header test framework for C.
 
 ## Requirements
 
-You need a fully `C99` compliant compiler, no further dependencies. I
-explicitly tested these setups:
+You need a fully `C99` compliant compiler, no further dependencies. I explicitly
+tested these setups:
 
 - MacOS using `GCC 14` and `Apple Clang 15`
 - Linux using `GCC 14` and `Clang 18`
@@ -70,7 +70,7 @@ The macros are defined and documented in the header file `sest.h`.
 
 > MIT License
 >
-> Copyright (c) 2024 Tommy Breslein
+> Copyright (c) 2024-2025 Tommy Breslein
 >
 > Permission is hereby granted, free of charge, to any person obtaining a copy
 > of this software and associated documentation files (the "Software"), to deal
