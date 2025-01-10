@@ -34,30 +34,43 @@
 #include <time.h>
 
 /// custom fprintf(stdout, ...) function to indicate a successful test
-int __SEST_SUCCESS__(const char *const expr);
+int __SEST_SUCCESS__(const char *const expr, const char *const description);
 
 /// custom fprintf(stderr, ...) function to indicate a failed test
-int __SEST_FAILURE__(
-    const char *const expr, const char *const file, const int line);
+int __SEST_FAILURE__(const char *const expr, const char *const file,
+    const int line, const char *const description);
 
 /// helper macros to make the sest_assert_* macros easier to read and write
-#define __SEST_ASSERT__(lhs, op, rhs)                                          \
-    (lhs op rhs) ? __SEST_SUCCESS__(#lhs " " #op " " #rhs)                     \
-                 : __SEST_FAILURE__(#lhs " " #op " " #rhs, __FILE__, __LINE__)
+#define __SEST_ASSERT__(lhs, op, rhs, desc)                                    \
+    (lhs op rhs)                                                               \
+        ? __SEST_SUCCESS__(#lhs " " #op " " #rhs, desc)                        \
+        : __SEST_FAILURE__(#lhs " " #op " " #rhs, __FILE__, __LINE__, desc)
+#define __SEST_ASSERT_NO_OP__(lhs, op, rhs, desc)                              \
+    (lhs op rhs) ? __SEST_SUCCESS__(#lhs, desc)                                \
+                 : __SEST_FAILURE__(#lhs, __FILE__, __LINE__, desc)
 
 // === SEST ASSERT MACROS ===
 // For most of these, the arguments of the __SEST_ASSERT__ macro tell you what
 // the macro tests for
-#define sest_assert_eq(lhs, rhs) __SEST_ASSERT__(lhs, ==, rhs)
-#define sest_assert_neq(lhs, rhs) __SEST_ASSERT__(lhs, !=, rhs)
-#define sest_assert_gt(lhs, rhs) __SEST_ASSERT__(lhs, >, rhs)
-#define sest_assert_lt(lhs, rhs) __SEST_ASSERT__(lhs, <, rhs)
-#define sest_assert_geq(lhs, rhs) __SEST_ASSERT__(lhs, >=, rhs)
-#define sest_assert_leq(lhs, rhs) __SEST_ASSERT__(lhs, <=, rhs)
+#define sest_assert_eq(lhs, rhs, desc) __SEST_ASSERT__(lhs, ==, rhs, desc)
+#define sest_assert_neq(lhs, rhs, desc) __SEST_ASSERT__(lhs, !=, rhs, desc)
+#define sest_assert_gt(lhs, rhs, desc) __SEST_ASSERT__(lhs, >, rhs, desc)
+#define sest_assert_lt(lhs, rhs, desc) __SEST_ASSERT__(lhs, <, rhs, desc)
+#define sest_assert_geq(lhs, rhs, desc) __SEST_ASSERT__(lhs, >=, rhs, desc)
+#define sest_assert_leq(lhs, rhs, desc) __SEST_ASSERT__(lhs, <=, rhs, desc)
+
+#define sest_assert_streq(lhs, rhs, desc)                                      \
+    strcmp(lhs, rhs) == 0                                                      \
+        ? __SEST_SUCCESS__(#lhs " == " #rhs, desc)                             \
+        : __SEST_FAILURE__(#lhs " == " #rhs, __FILE__, __LINE__, desc)
+#define sest_assert_strneq(lhs, rhs, desc)                                     \
+    strcmp(lhs, rhs) != 0                                                      \
+        ? __SEST_SUCCESS__(#lhs " == " #rhs, desc)                             \
+        : __SEST_FAILURE__(#lhs " == " #rhs, __FILE__, __LINE__, desc)
 
 // just an assert that you can pass an arbitrary expression to that must
 // evaluate to an int or bool
-#define sest_assert(cond) __SEST_ASSERT__(cond, ==, 0)
+#define sest_assert(cond, desc) __SEST_ASSERT_NO_OP__(cond, !=, 0, desc)
 
 // === SEST IMPLEMENTATION ===
 // This is where the "user" stuff ends.
@@ -79,17 +92,17 @@ static const char *const color_bold_fg = "";
 #endif
 
 // === SEST PRINTING ===
-int __SEST_SUCCESS__(const char *const expr)
+int __SEST_SUCCESS__(const char *const expr, const char *const description)
 {
-    fprintf(
-        stdout, "[ %sSUCCESS%s ]: %s\n", color_bold_green, color_reset, expr);
+    fprintf(stdout, "[ %sSUCCESS%s ]: %s (%s)\n", color_bold_green, color_reset,
+        description, expr);
     return 0;
 }
-int __SEST_FAILURE__(
-    const char *const expr, const char *const file, const int line)
+int __SEST_FAILURE__(const char *const expr, const char *const file,
+    const int line, const char *const description)
 {
-    fprintf(stderr, "[ %sFAILURE%s ]: %s ===> assert location: %s:%d\n",
-        color_bold_red, color_reset, expr, file, line);
+    fprintf(stderr, "[ %sFAILURE%s ]: %s (%s) ===> assert location: %s:%d\n",
+        color_bold_red, color_reset, description, expr, file, line);
     return 1;
 }
 
