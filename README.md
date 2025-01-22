@@ -4,7 +4,8 @@ A simple single header test framework for C.
 
 ## Requirements
 
-You need a fully `C99` compliant compiler, no further dependencies. I explicitly
+You need a partially`C23` compliant compiler, no further dependencies. The
+important standard feature you need is empty initializers. I explicitly
 tested these setups:
 
 - MacOS using `GCC 14` and `Apple Clang 15`
@@ -12,40 +13,26 @@ tested these setups:
 
 ## Features
 
-`sest` has practically no features, and that's by design. You just list tests
-functions in a macro, and then it runs those tests sequentially.
+`sest` has practically no features, and that's by design. You just define a
+couple of tests, and then list which of these you want to run in a different
+macro.
 
-What's important about these functions is that they must have take no arguments,
-and they must return an `int` as an error code. Personally, I just use the
-`sest_assert_*` macros, which return `1` to the expression they are called in if
-the assert failed, and then my test functions return the number of failed errors
-(see the minimal example). You are free to attach whatever meaning you want to
-the returned integers, that's just what I do.
+For any such test case, `sest` provides a bunch of custom assert macros you can
+use. Take a look at the example(s) in the repository for how to structure a
+simple test program.
 
-## Output
+## Configuration
 
-### `__SEST_NO_COLOR__`
+The `SEST_TEST_MAIN` macro takes a variadic amount of arguments. Those arguments
+are the struct fields of the underlying `__SEST_CONFIG__` struct. Look up the
+struct definition in `sest.h` for docs.
 
-By default, `sest` produces colored output. If you don't want that, add the
-`__SEST_NO_COLOR__` define to your test file or to your compile time variables.
-
-If you want to add it to your test file directly, make sure you define it before
-including `sest.h`:
+For example, by default, `sest` produces colored output. If you don't want that,
+add the `.no_color = 1` in the macro arguments like this:
 
 ```c
-// top of the file
-
-#define __SEST_NO_COLOR__
-#include "sest.h"
-
-// ...
+SEST_TEST_MAIN(.no_color = 1)
 ```
-
-### Heap allocations
-
-Since this is important for some people, let me be clear: `sest` performs heap
-allocations during its test runs. If you cannot have that in your test
-framework, then `sest` is no fit for your use case.
 
 ## Running the examples
 

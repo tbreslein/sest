@@ -8,7 +8,7 @@ EXAMPLES := $(subst $(EXAMPLE_DIR),$(BIN_DIR),$(patsubst %.c,%,$(EXAMPLES_SRC)))
 CC_DB := compile_commands.json
 CC := gcc
 CFLAGS := \
-		  -std=c99 \
+		  -std=c2x \
 		  -Wall \
 		  -Wextra \
 		  -pedantic \
@@ -30,10 +30,10 @@ ifeq ($(CC),clang)
 			  -Wno-poison-system-directories \
 			  -Wno-unused-function
 endif
-ifeq ($(CC),gcc)
-	CFLAGS += \
-			  -Wformat-truncation
-endif
+# ifeq ($(CC),gcc)
+# 	CFLAGS += \
+# 			  -Wformat-truncation
+# endif
 
 DEVFLAGS := $(CFLAGS) \
 			-g2
