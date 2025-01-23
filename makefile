@@ -8,7 +8,7 @@ EXAMPLES := $(subst $(EXAMPLE_DIR),$(BIN_DIR),$(patsubst %.c,%,$(EXAMPLES_SRC)))
 CC_DB := compile_commands.json
 CC := gcc
 CFLAGS := \
-		  -std=c2x \
+		  -std=c99 \
 		  -Wall \
 		  -Wextra \
 		  -pedantic \

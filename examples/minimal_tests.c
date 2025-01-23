@@ -35,7 +35,20 @@ SEST_CASE(foobar)
 // should probably just use this macro which defines a main function and a bunch
 // of boilerplate code to make sest work.
 // Inside of this function, you can register the test cases you want to run with
-// the RUN_SEST_CASE macros.
+// the RUN_SEST_CASE macros. You may also pass arguments to this function to
+// configure the tests, as if the argument list was the init list of the
+// __SEST_CONFIG__ struct defined in sest.h. At the time of writing this, these
+// are the things you can configure (all default values are 0):
+//
+// - .fail_fast: set this to 1 in order for any test case to return immediately
+//     upon encountering a failed assertion
+// - .no_color: set this to 1 to suppress any color output
+//
+// For example, if you wanted to enable both of these options, you would call
+// the like this:
+// SEST_TEST_MAIN(.fail_fast = 1, .no_color = 1)
+// or if you just wanted to enable fail_fast, then invoke the macro like this:
+// SEST_TEST_MAIN(.fail_fast = 1)
 SEST_TEST_MAIN()
 {
     // register this sest case to run. argument must match the name of a sest

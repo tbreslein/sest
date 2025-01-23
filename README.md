@@ -4,8 +4,7 @@ A simple single header test framework for C.
 
 ## Requirements
 
-You need a partially`C23` compliant compiler, no further dependencies. The
-important standard feature you need is empty initializers. I explicitly
+You need a `C99` compliant compiler, no further dependencies. I explicitly
 tested these setups:
 
 - MacOS using `GCC 14` and `Apple Clang 15`

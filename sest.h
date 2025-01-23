@@ -1,5 +1,5 @@
 /* sest.h
- * Version: v0.4.0
+ * Version: v0.5.0
  *
  * The MIT License (MIT)
  *
@@ -120,8 +120,14 @@
 
 typedef struct
 {
+    /// exit the test immediately after the first failed assertion
     int fail_fast;
+
+    /// enforce colorless output
     int no_color;
+
+    /// this field only exists to make the main macro work pre C23
+    int _ignore_this;
 } __SEST_CONFIG__;
 
 typedef struct
@@ -149,8 +155,8 @@ int __SEST_ASSERT_SUCCESS__(const char *const expr,
 {
     o->succ_assertions++;
     fprintf(stdout, "[ %sSUCCESS%s ]: %s (%s)\n",
-        c->no_color == 0 ? "" : color_bold_green,
-        c->no_color == 0 ? "" : color_reset, description, expr);
+        c->no_color != 0 ? "" : color_bold_green,
+        c->no_color != 0 ? "" : color_reset, description, expr);
     return 0;
 }
 int __SEST_ASSERT_FAILURE__(const char *const expr, const char *const file,
@@ -159,8 +165,8 @@ int __SEST_ASSERT_FAILURE__(const char *const expr, const char *const file,
 {
     o->fail_assertions++;
     fprintf(stderr, "[ %sFAILURE%s ]: %s (%s) ===> assert location: %s:%d\n",
-        c->no_color == 0 ? "" : color_bold_red,
-        c->no_color == 0 ? "" : color_reset, description, expr, file, line);
+        c->no_color != 0 ? "" : color_bold_red,
+        c->no_color != 0 ? "" : color_reset, description, expr, file, line);
     return 1;
 }
 
@@ -188,17 +194,16 @@ int __SEST_ASSERT_FAILURE__(const char *const expr, const char *const file,
     } while (0);
 
 #define SEST_TEST_MAIN(...)                                                    \
-    void __sest_proxy_main__(                                                  \
-        const __SEST_CONFIG__ *, __SEST_TEST_CONTAINER__ *__sc);               \
+    void __sest_proxy_main__(__SEST_TEST_CONTAINER__ *__sc);                   \
     int main(void)                                                             \
     {                                                                          \
-        __SEST_CONFIG__ config = (__SEST_CONFIG__){__VA_ARGS__};               \
-        config.no_color = config.no_color == 0 ? isatty(1) : 1;                \
-        __SEST_TEST_CONTAINER__ sc = (__SEST_TEST_CONTAINER__){};              \
-        __sest_proxy_main__(&config, &sc);                                     \
+        __SEST_CONFIG__ config = {._ignore_this = 0, __VA_ARGS__};             \
+        config.no_color = config.no_color == 0 ? !(isatty(1) == 1) : 1;        \
+        __SEST_TEST_CONTAINER__ sc = {.len = 0};                               \
+        __sest_proxy_main__(&sc);                                              \
         printf("\n%s=== STARTING SEST TESTS ===%s\n\n",                        \
-            config.no_color == 0 ? "" : color_bold_fg,                         \
-            config.no_color == 0 ? "" : color_reset);                          \
+            config.no_color != 0 ? "" : color_bold_fg,                         \
+            config.no_color != 0 ? "" : color_reset);                          \
         int num_fail_tests = 0;                                                \
         int num_succ_tests = 0;                                                \
         int num_fail_asserts = 0;                                              \
@@ -213,17 +218,17 @@ int __SEST_ASSERT_FAILURE__(const char *const expr, const char *const file,
             puts("");                                                          \
         }                                                                      \
         printf("\n%s=== SEST TEST SUMMARY ===%s\n\n",                          \
-            config.no_color == 0 ? "" : color_bold_fg,                         \
-            config.no_color == 0 ? "" : color_reset);                          \
+            config.no_color != 0 ? "" : color_bold_fg,                         \
+            config.no_color != 0 ? "" : color_reset);                          \
         printf("%sTests run: %d%s\n",                                          \
-            config.no_color == 0 ? "" : color_bold_fg, sc.len,                 \
-            config.no_color == 0 ? "" : color_reset);                          \
+            config.no_color != 0 ? "" : color_bold_fg, sc.len,                 \
+            config.no_color != 0 ? "" : color_reset);                          \
         printf("%sPassed: %d%s (%d successfull assertions)\n",                 \
-            config.no_color == 0 ? "" : color_bold_green, num_succ_tests,      \
-            config.no_color == 0 ? "" : color_reset, num_succ_asserts);        \
+            config.no_color != 0 ? "" : color_bold_green, num_succ_tests,      \
+            config.no_color != 0 ? "" : color_reset, num_succ_asserts);        \
         printf("%sFailed: %d%s (%d failed assertions)\n",                      \
-            config.no_color == 0 ? "" : color_bold_red, num_fail_tests,        \
-            config.no_color == 0 ? "" : color_reset, num_fail_asserts);        \
+            config.no_color != 0 ? "" : color_bold_red, num_fail_tests,        \
+            config.no_color != 0 ? "" : color_reset, num_fail_asserts);        \
         if (num_fail_tests > 0) {                                              \
             puts("\nThe following tests failed");                              \
             for (int i = 0; i < sc.len; i++) {                                 \
@@ -235,5 +240,4 @@ int __SEST_ASSERT_FAILURE__(const char *const expr, const char *const file,
         }                                                                      \
         return 0;                                                              \
     }                                                                          \
-    void __sest_proxy_main__(                                                  \
-        const __SEST_CONFIG__ *, __SEST_TEST_CONTAINER__ *__sc)
+    void __sest_proxy_main__(__SEST_TEST_CONTAINER__ *__sc)
